@@ -8,7 +8,7 @@ const server = http.createServer(app);
 // 🔹 Socket.io init
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:4001",
+    origin: "https://chat-steel-eta.vercel.app",
     methods: ["GET", "POST"],
     credentials: true,
   },
