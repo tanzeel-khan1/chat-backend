@@ -25,6 +25,7 @@ const generateToken = (userId, res) => {
   });
 };
 
+
 export const jwtCookieOptions = {
   httpOnly: true,
   secure: isProduction,
