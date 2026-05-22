@@ -1,6 +1,6 @@
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
-import generateToken from "../jwt/generateToken.js";
+import generateToken, { jwtCookieOptions } from "../jwt/generateToken.js";
 
 export const signup = async (req, res) => {
   try {
@@ -87,7 +87,7 @@ export const login = async (req, res) => {
 
 export const logout = (req, res) => {
   try {
-    res.clearCookie("jwt");
+    res.clearCookie("jwt", jwtCookieOptions);
     res.status(200).json({ message: "Logout successful" });
   } catch (error) {
     console.log(error);

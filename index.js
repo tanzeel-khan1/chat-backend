@@ -12,7 +12,10 @@ dotenv.config();
 app.use(express.json());
 app.use(
   cors({
-    origin: "https://chat-steel-eta.vercel.app",
+    origin: [
+      "https://chat-steel-eta.vercel.app",
+      "http://localhost:4001",
+    ],
     credentials: true,
   })
 );
