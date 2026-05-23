@@ -5,44 +5,55 @@ import { Server } from "socket.io";
 const app = express();
 const server = http.createServer(app);
 
-// 🔹 Socket.io init
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  "https://chat-steel-eta.vercel.app",
+  "http://localhost:4001",
+  "http://localhost:5173",
+].filter(Boolean);
+
 const io = new Server(server, {
   cors: {
-    origin: "https://chat-steel-eta.vercel.app",
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
-// 🔹 userId => socketId map
+// userId (string) => socketId
 const users = {};
 
-// ✅ SAME FILE se controller use karega
 export const getReceiverSocketId = (receiverId) => {
-  return users[receiverId];
+  if (!receiverId) return null;
+  return users[String(receiverId)] || null;
 };
 
-// 🔹 Socket connection
-io.on("connection", (socket) => {
-  console.log("✅ New client connected:", socket.id);
+export const emitToUser = (userId, event, payload) => {
+  const socketId = getReceiverSocketId(userId);
+  if (socketId) {
+    io.to(socketId).emit(event, payload);
+  }
+};
 
-  const userId = socket.handshake.query.userId;
-  console.log("👉 userId from socket:", userId);
+io.on("connection", (socket) => {
+  const userId = socket.handshake.query.userId
+    ? String(socket.handshake.query.userId)
+    : null;
+
+  console.log("Socket connected:", socket.id, "userId:", userId);
 
   if (userId) {
     users[userId] = socket.id;
+    socket.join(userId);
   }
 
-  // online users bhejo
   io.emit("getOnlineUsers", Object.keys(users));
 
   socket.on("disconnect", () => {
-    console.log("❌ Client disconnected:", socket.id);
-
-    if (userId) {
+    if (userId && users[userId] === socket.id) {
       delete users[userId];
-      io.emit("getOnlineUsers", Object.keys(users));
     }
+    io.emit("getOnlineUsers", Object.keys(users));
   });
 });
 

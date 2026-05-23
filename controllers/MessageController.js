@@ -1,6 +1,6 @@
 import Conversation from "../models/Conversation.js";
 import Message from "../models/MessageModal.js";
-import { getReceiverSocketId, io } from "../SocketIO/server.js";
+import { emitToUser } from "../SocketIO/server.js";
 import User from "../models/User.js";
 
 
@@ -54,16 +54,17 @@ export const sendMessages = async (req, res) => {
     conversation.messages.push(newMessage._id);
     await conversation.save();
 
+    const populatedMessage = await Message.findById(newMessage._id)
+      .populate("sender", "_id name email")
+      .populate("receiver", "_id name email");
+
     res.status(201).json({
       success: true,
-      data: newMessage,
+      data: populatedMessage,
     });
 
-    const receiverSocketId = getReceiverSocketId(receiverId.toString());
-
-    if (receiverSocketId && io) {
-      io.to(receiverSocketId).emit("newMessage", newMessage);
-    }
+    emitToUser(receiverId, "newMessage", populatedMessage);
+    emitToUser(senderId, "newMessage", populatedMessage);
   } catch (error) {
     console.error("sendMessages error:", error);
     if (!res.headersSent) {
@@ -145,13 +146,10 @@ export const deleteMessage = async (req, res) => {
     await Message.findByIdAndDelete(messageId);
 
     if (message.receiver) {
-      const receiverSocketId = getReceiverSocketId(
-        message.receiver.toString()
-      );
-
-      if (receiverSocketId && io) {
-        io.to(receiverSocketId).emit("messageDeleted", { messageId });
-      }
+      emitToUser(message.receiver, "messageDeleted", { messageId });
+    }
+    if (message.sender) {
+      emitToUser(message.sender, "messageDeleted", { messageId });
     }
 
     return res
