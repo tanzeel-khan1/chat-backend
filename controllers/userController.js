@@ -114,11 +114,29 @@ export const getUserProfile = async (req, res) => {
     res.status(500).json({ message: "Internal server error", error });
   }
 };
+// export const getAllUsers = async (req, res) => {
+//   try {
+//     const users = await User.find().select(
+//       "-password -confirmPassword -__v"
+//     );
+
+//     res.status(200).json({
+//       message: "All users fetched successfully",
+//       count: users.length,
+//       users,
+//     });
+//   } catch (error) {
+//     console.log("error getAllUsers", error);
+//     res.status(500).json({ message: "Internal server error", error });
+//   }
+// };
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select(
-      "-password -confirmPassword -__v"
-    );
+    const loggedInUserId = req.user._id;
+
+    const users = await User.find({
+      _id: { $ne: loggedInUserId }, // current user exclude
+    }).select("-password -confirmPassword -__v");
 
     res.status(200).json({
       message: "All users fetched successfully",
@@ -130,7 +148,6 @@ export const getAllUsers = async (req, res) => {
     res.status(500).json({ message: "Internal server error", error });
   }
 };
-
 export const deleteUser = async (req, res) => {
   try {
     const { id } = req.params; // URL se user ID
