@@ -1,16 +1,12 @@
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
+import { getCorsOrigins } from "../config/urls.js";
 
 const app = express();
 const server = http.createServer(app);
 
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  "https://chat-steel-eta.vercel.app",
-  "http://localhost:4001",
-  "http://localhost:5173",
-].filter(Boolean);
+const allowedOrigins = getCorsOrigins();
 
 const io = new Server(server, {
   cors: {

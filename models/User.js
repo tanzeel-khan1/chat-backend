@@ -7,10 +7,19 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     confirmPassword: { type: String, required: true },
     blockedUsers: {
-  type: [mongoose.Schema.Types.ObjectId],
-  ref: "User",
-  default: [],
-},
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "User",
+      default: [],
+    },
+    pushSubscriptions: [
+      {
+        endpoint: { type: String, required: true },
+        keys: {
+          p256dh: { type: String, required: true },
+          auth: { type: String, required: true },
+        },
+      },
+    ],
   },
   {
     timestamps: true,

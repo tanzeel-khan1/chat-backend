@@ -1,7 +1,9 @@
 import Conversation from "../models/Conversation.js";
 import Message from "../models/MessageModal.js";
-import { emitToUser } from "../SocketIO/server.js";
+import { emitToUser, getReceiverSocketId } from "../SocketIO/server.js";
 import User from "../models/User.js";
+import { sendPushToUser } from "../utils/webPush.js";
+import { getFrontendUrl } from "../config/urls.js";
 
 
 export const sendMessages = async (req, res) => {
@@ -65,6 +67,20 @@ export const sendMessages = async (req, res) => {
 
     emitToUser(receiverId, "newMessage", populatedMessage);
     emitToUser(senderId, "newMessage", populatedMessage);
+
+    const receiverOnline = Boolean(getReceiverSocketId(receiverId));
+    if (!receiverOnline) {
+      const preview =
+        message.trim().length > 60
+          ? `${message.trim().slice(0, 60)}...`
+          : message.trim();
+      sendPushToUser(receiverId, {
+        title: `${sender.name} ne message bheja`,
+        body: preview,
+        senderId: String(senderId),
+        url: getFrontendUrl(),
+      }).catch((err) => console.error("Push notification error:", err));
+    }
   } catch (error) {
     console.error("sendMessages error:", error);
     if (!res.headersSent) {
